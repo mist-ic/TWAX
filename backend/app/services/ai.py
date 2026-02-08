@@ -67,7 +67,6 @@ async def score_article(title: str, content: str) -> ArticleScore:
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=ArticleScore,
-            temperature=settings.GEMINI_TEMPERATURE,
         ),
     )
 
@@ -96,7 +95,6 @@ async def generate_tweet(
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=TweetOutput,
-            temperature=settings.GEMINI_TEMPERATURE,
         ),
     )
 
