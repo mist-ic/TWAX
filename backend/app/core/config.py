@@ -22,11 +22,24 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     # Gemini
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     GEMINI_TEMPERATURE: float = 0.7
 
     # Rate Limiting
     MAX_CONCURRENT_AI_CALLS: int = 5
+
+    # Twitter/X OAuth 1.0a
+    TWITTER_BEARER_TOKEN: str = ""
+    TWITTER_ACCESS_TOKEN: str = ""
+    TWITTER_ACCESS_TOKEN_SECRET: str = ""
+    
+    # Twitter/X OAuth 2.0
+    TWITTER_CLIENT_ID: str = ""
+    TWITTER_CLIENT_SECRET: str = ""
+
+    # Bluesky
+    BLUESKY_HANDLE: str = ""
+    BLUESKY_PASSWORD: str = ""
 
 
 settings = Settings()

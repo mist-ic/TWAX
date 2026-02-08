@@ -17,6 +17,8 @@ dependencies = [
     "httpx>=0.26.0",
     "feedparser>=6.0.0",
     "python-dotenv>=1.0.0",
+    "twikit>=2.0.0",
+    "atproto>=0.0.55",
 ]
 
 [project.optional-dependencies]
