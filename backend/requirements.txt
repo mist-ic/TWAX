@@ -1,0 +1,29 @@
+# Core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.6.0
+pydantic-settings>=2.0.0
+
+# AI
+google-genai>=1.0.0
+instructor>=1.0.0
+
+# Embeddings (CPU-only torch to reduce size)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+sentence-transformers>=2.3.0
+
+# Database
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+
+# HTTP & Parsing
+httpx>=0.26.0
+feedparser>=6.0.0
+
+# Social Publishing
+twikit>=2.0.0
+atproto>=0.0.55
+
+# Utils
+python-dotenv>=1.0.0
