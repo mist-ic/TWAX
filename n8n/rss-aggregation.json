@@ -1,0 +1,207 @@
+{
+    "name": "TWAX - RSS Aggregation",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "minutes",
+                            "minutesInterval": 30
+                        }
+                    ]
+                }
+            },
+            "id": "schedule-trigger",
+            "name": "Every 30 Minutes",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Tech news RSS feeds\nconst feeds = [\n  { url: 'https://techcrunch.com/feed/', source: 'TechCrunch' },\n  { url: 'https://www.theverge.com/rss/index.xml', source: 'The Verge' },\n  { url: 'https://feeds.arstechnica.com/arstechnica/technology-lab', source: 'Ars Technica' },\n  { url: 'https://www.wired.com/feed/rss', source: 'Wired' },\n  { url: 'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml', source: 'NYT Tech' },\n  { url: 'https://feeds.feedburner.com/venturebeat/SZYF', source: 'VentureBeat' },\n  { url: 'https://www.technologyreview.com/feed/', source: 'MIT Tech Review' },\n  { url: 'https://openai.com/blog/rss.xml', source: 'OpenAI Blog' },\n  { url: 'https://blog.google/rss/', source: 'Google Blog' },\n  { url: 'https://engineering.fb.com/feed/', source: 'Meta Engineering' }\n];\n\nreturn feeds.map(f => ({ json: f }));"
+            },
+            "id": "code-feeds",
+            "name": "RSS Feed URLs",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                420,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "options": {
+                    "reset": false
+                },
+                "batchSize": 1
+            },
+            "id": "loop-items",
+            "name": "Loop Over Feeds",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                640,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "url": "={{ $json.url }}",
+                "options": {}
+            },
+            "id": "rss-read",
+            "name": "Read RSS Feed",
+            "type": "n8n-nodes-base.rssFeedRead",
+            "typeVersion": 1,
+            "position": [
+                860,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Add source info and filter recent articles (last 24 hours)\nconst source = $('Loop Over Feeds').first().json.source;\nconst oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);\n\nreturn $input.all()\n  .filter(item => {\n    const pubDate = new Date(item.json.pubDate || item.json.isoDate);\n    return pubDate > oneDayAgo;\n  })\n  .map(item => ({\n    json: {\n      title: item.json.title,\n      url: item.json.link,\n      content: item.json['content:encoded'] || item.json.content || item.json.description || '',\n      source: source,\n      published_at: item.json.pubDate || item.json.isoDate\n    }\n  }));"
+            },
+            "id": "transform-articles",
+            "name": "Transform Articles",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1080,
+                400
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:8000/api/articles",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ JSON.stringify($json) }}",
+                "options": {
+                    "response": {
+                        "response": {
+                            "neverError": true
+                        }
+                    }
+                }
+            },
+            "id": "http-request",
+            "name": "Send to Backend",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1300,
+                400
+            ]
+        },
+        {
+            "parameters": {},
+            "id": "no-op",
+            "name": "Done",
+            "type": "n8n-nodes-base.noOp",
+            "typeVersion": 1,
+            "position": [
+                860,
+                200
+            ]
+        }
+    ],
+    "connections": {
+        "Every 30 Minutes": {
+            "main": [
+                [
+                    {
+                        "node": "RSS Feed URLs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "RSS Feed URLs": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Feeds",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Over Feeds": {
+            "main": [
+                [
+                    {
+                        "node": "Done",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Read RSS Feed",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Read RSS Feed": {
+            "main": [
+                [
+                    {
+                        "node": "Transform Articles",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Transform Articles": {
+            "main": [
+                [
+                    {
+                        "node": "Send to Backend",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send to Backend": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Over Feeds",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 0,
+    "pinData": {}
+}
