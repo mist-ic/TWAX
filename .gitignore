@@ -1,1 +1,36 @@
-Research.md
+# TWAX .gitignore
+
+# Research folder (private planning docs)
+Research/
+
+# Old attempts
+old attempt/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build
+dist/
+build/
