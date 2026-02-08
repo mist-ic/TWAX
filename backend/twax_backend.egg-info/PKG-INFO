@@ -1,0 +1,59 @@
+Metadata-Version: 2.4
+Name: twax-backend
+Version: 0.1.0
+Summary: TWAX AI Backend - Tech news curation and tweet generation
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi>=0.109.0
+Requires-Dist: uvicorn[standard]>=0.27.0
+Requires-Dist: pydantic>=2.6.0
+Requires-Dist: instructor>=1.0.0
+Requires-Dist: google-generativeai>=0.8.0
+Requires-Dist: sentence-transformers>=2.3.0
+Requires-Dist: sqlalchemy>=2.0.0
+Requires-Dist: asyncpg>=0.29.0
+Requires-Dist: httpx>=0.26.0
+Requires-Dist: feedparser>=6.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "dev"
+Requires-Dist: ruff>=0.2.0; extra == "dev"
+
+# TWAX Backend
+
+AI service for tech news curation and tweet generation.
+
+## Setup
+
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate (Windows)
+.venv\Scripts\activate
+
+# Install dependencies
+pip install -e .
+
+# Run development server
+uvicorn app.main:app --reload
+```
+
+## Environment Variables
+
+Create `.env` file:
+
+```
+GEMINI_API_KEY=your-gcp-api-key
+DATABASE_URL=postgresql://...
+```
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/articles` | POST | Process articles |
+| `/generate-tweet` | POST | Generate tweet from article |
+| `/deduplicate` | POST | Check for duplicates |
