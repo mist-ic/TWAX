@@ -22,8 +22,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
     # Gemini
-    GEMINI_MODEL: str = "gemini-2.5-flash"
-    GEMINI_TEMPERATURE: float = 0.7
+    GEMINI_MODEL: str = "gemini-3-flash-preview"
 
     # Rate Limiting
     MAX_CONCURRENT_AI_CALLS: int = 5
