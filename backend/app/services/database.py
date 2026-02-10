@@ -4,7 +4,7 @@ Uses a connection pool for efficient async PostgreSQL access to Neon.
 All heavy imports happen on first database call, not at module level.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID, uuid4
 
@@ -54,6 +54,18 @@ def _row_to_article(row) -> Article:
     )
 
 
+def _to_naive_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """Convert a datetime to naive UTC for 'timestamp without time zone' columns.
+    asyncpg is strict: it refuses to mix aware and naive datetimes.
+    Our DB columns use 'timestamp' (naive), so we strip tzinfo after converting to UTC.
+    """
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
 async def save_article(
     title: str,
     url: str,
@@ -70,7 +82,8 @@ async def save_article(
     """Save a new article to the database."""
     pool = await get_pool()
     article_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.utcnow()  # naive UTC — matches DB 'timestamp' columns
+    pub_at = _to_naive_utc(published_at)
 
     await pool.execute(
         """
@@ -80,14 +93,14 @@ async def save_article(
             generated_tweet, hashtags, embedding, status
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
         """,
-        article_id, title, url, content[:10000], source, published_at, now,
+        article_id, title, url, content[:10000], source, pub_at, now,
         relevance_score, newsworthiness_score, summary,
         generated_tweet, hashtags or [], embedding, "pending",
     )
 
     return Article(
         id=article_id, title=title, url=url, content=content,
-        source=source, published_at=published_at, created_at=now,
+        source=source, published_at=pub_at, created_at=now,
         relevance_score=relevance_score, newsworthiness_score=newsworthiness_score,
         summary=summary, generated_tweet=generated_tweet,
         hashtags=hashtags or [], embedding=embedding, status="pending",
