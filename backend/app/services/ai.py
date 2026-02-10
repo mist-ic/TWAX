@@ -1,10 +1,8 @@
 """Gemini AI service for scoring and tweet generation.
 
 Uses the latest google-genai SDK (2026) with native Pydantic structured output.
+All heavy imports (google.genai) are lazy to avoid blocking server startup.
 """
-
-from google import genai
-from google.genai import types
 
 from app.core.config import settings
 from app.models import ArticleScore, TweetOutput
@@ -17,6 +15,7 @@ def get_client():
     """Get or create Gemini client (lazy initialization)."""
     global _client
     if _client is None:
+        from google import genai
         _client = genai.Client(api_key=settings.GEMINI_API_KEY)
     return _client
 
@@ -54,10 +53,9 @@ Content:
 
 
 async def score_article(title: str, content: str) -> ArticleScore:
-    """
-    Score an article for relevance and newsworthiness using Gemini.
-    Uses native Pydantic structured output with google-genai SDK.
-    """
+    """Score an article for relevance and newsworthiness using Gemini."""
+    from google.genai import types
+
     prompt = SCORING_PROMPT.format(title=title, content=content[:2000])
     client = get_client()
 
@@ -70,16 +68,15 @@ async def score_article(title: str, content: str) -> ArticleScore:
         ),
     )
 
-    # Parse the response into Pydantic model
     return response.parsed
 
 
 async def generate_tweet(
     title: str, content: str, feedback: str | None = None
 ) -> TweetOutput:
-    """
-    Generate a tweet for an article using Gemini with native structured output.
-    """
+    """Generate a tweet for an article using Gemini with native structured output."""
+    from google.genai import types
+
     feedback_section = ""
     if feedback:
         feedback_section = f"Previous feedback to incorporate: {feedback}"

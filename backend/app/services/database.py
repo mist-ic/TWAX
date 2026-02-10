@@ -1,9 +1,9 @@
-"""Database service using raw asyncpg (no SQLAlchemy dependency).
+"""Database service using raw asyncpg (lazy imports).
 
 Uses a connection pool for efficient async PostgreSQL access to Neon.
+All heavy imports happen on first database call, not at module level.
 """
 
-import asyncpg
 from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
@@ -12,29 +12,46 @@ from app.core.config import settings
 from app.db.models import Article
 
 # Connection pool (lazy-initialized)
-_pool: Optional[asyncpg.Pool] = None
+_pool = None
 
 
 def _get_dsn() -> str:
     """Convert DATABASE_URL to asyncpg-compatible DSN."""
     url = settings.DATABASE_URL
-    # asyncpg uses 'ssl' not 'sslmode'
     url = url.replace("sslmode=", "ssl=")
-    # asyncpg uses postgresql:// not postgresql+asyncpg://
     url = url.replace("postgresql+asyncpg://", "postgresql://")
     return url
 
 
-async def get_pool() -> asyncpg.Pool:
-    """Get or create the connection pool."""
+async def get_pool():
+    """Get or create the connection pool (lazy)."""
     global _pool
     if _pool is None:
-        _pool = await asyncpg.create_pool(
-            dsn=_get_dsn(),
-            min_size=1,
-            max_size=5,
-        )
+        import asyncpg
+        _pool = await asyncpg.create_pool(dsn=_get_dsn(), min_size=1, max_size=5)
     return _pool
+
+
+def _row_to_article(row) -> Article:
+    """Convert a database row to an Article dataclass."""
+    return Article(
+        id=row["id"],
+        title=row["title"],
+        url=row["url"],
+        content=row["content"],
+        source=row["source"],
+        published_at=row.get("published_at"),
+        created_at=row.get("created_at"),
+        relevance_score=row.get("relevance_score"),
+        newsworthiness_score=row.get("newsworthiness_score"),
+        summary=row.get("summary"),
+        generated_tweet=row.get("generated_tweet"),
+        hashtags=row.get("hashtags") or [],
+        embedding=row.get("embedding"),
+        status=row.get("status", "pending"),
+        moderated_at=row.get("moderated_at"),
+        edited_tweet=row.get("edited_tweet"),
+    )
 
 
 async def save_article(
@@ -77,34 +94,10 @@ async def save_article(
     )
 
 
-def _row_to_article(row: asyncpg.Record) -> Article:
-    """Convert a database row to an Article dataclass."""
-    return Article(
-        id=row["id"],
-        title=row["title"],
-        url=row["url"],
-        content=row["content"],
-        source=row["source"],
-        published_at=row.get("published_at"),
-        created_at=row.get("created_at"),
-        relevance_score=row.get("relevance_score"),
-        newsworthiness_score=row.get("newsworthiness_score"),
-        summary=row.get("summary"),
-        generated_tweet=row.get("generated_tweet"),
-        hashtags=row.get("hashtags") or [],
-        embedding=row.get("embedding"),
-        status=row.get("status", "pending"),
-        moderated_at=row.get("moderated_at"),
-        edited_tweet=row.get("edited_tweet"),
-    )
-
-
 async def get_article_by_url(url: str) -> Optional[Article]:
     """Check if article with URL already exists."""
     pool = await get_pool()
-    row = await pool.fetchrow(
-        "SELECT * FROM articles WHERE url = $1", url
-    )
+    row = await pool.fetchrow("SELECT * FROM articles WHERE url = $1", url)
     return _row_to_article(row) if row else None
 
 
@@ -112,12 +105,8 @@ async def get_pending_articles(limit: int = 20) -> list[Article]:
     """Get pending articles ordered by relevance."""
     pool = await get_pool()
     rows = await pool.fetch(
-        """
-        SELECT * FROM articles
-        WHERE status = 'pending'
-        ORDER BY relevance_score DESC NULLS LAST
-        LIMIT $1
-        """,
+        """SELECT * FROM articles WHERE status = 'pending'
+           ORDER BY relevance_score DESC NULLS LAST LIMIT $1""",
         limit,
     )
     return [_row_to_article(r) for r in rows]
