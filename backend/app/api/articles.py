@@ -1,149 +1,143 @@
-"""Articles API endpoints."""
+"""Articles API endpoints — receives articles from n8n, scores, generates tweets, stores in DB."""
 
-from fastapi import APIRouter, HTTPException
-from uuid import UUID
+from fastapi import APIRouter, HTTPException, Query
+from typing import Optional
 
 from app.models import (
-    Article,
-    ArticleApproval,
     ArticleInput,
+    ArticleScore,
     ArticleStatus,
-    DeduplicationRequest,
-    DeduplicationResponse,
+    TweetOutput,
 )
 from app.services.ai import score_article, generate_tweet
-from app.services.embeddings import check_duplicate, generate_embedding
+from app.services.embeddings import generate_embedding
 from app.services import database as db
 
 router = APIRouter()
 
 
-@router.post("/articles", response_model=Article)
+@router.post("/articles")
 async def process_article(article: ArticleInput):
     """
-    Process a new article: check duplicates, score, generate tweet, and save to DB.
+    Process a new article from n8n RSS aggregation.
+    1. Dedup by URL
+    2. Score with Gemini
+    3. Generate tweet if relevant
+    4. Save to Neon DB
     """
-    from datetime import datetime
-
-    # Check if URL already exists
+    # 1. Check if URL already exists
     existing = await db.get_article_by_url(article.url)
     if existing:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Article already exists with ID {existing.id}",
-        )
+        return {
+            "status": "duplicate",
+            "message": f"Article already exists with ID {existing.id}",
+            "id": str(existing.id),
+        }
 
-    # Generate embedding for deduplication
-    embedding = await generate_embedding(f"{article.title} {article.content[:500]}")
+    # 2. Score the article with Gemini
+    relevance = None
+    newsworthiness = None
+    summary = None
+    try:
+        score_result = await score_article(article.title, article.content)
+        relevance = score_result.relevance
+        newsworthiness = score_result.newsworthiness
+        summary = score_result.summary
+    except Exception as e:
+        print(f"[WARN] Scoring failed for '{article.title[:50]}': {e}")
 
-    # Check for semantic duplicates
-    is_dup, similar_id, sim_score = await check_duplicate(embedding)
-    if is_dup:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Duplicate of article {similar_id} (similarity: {sim_score:.2f})",
-        )
+    # 3. Generate tweet if article is relevant (score >= 6)
+    generated_tweet = None
+    hashtags = []
+    if relevance and relevance >= 6:
+        try:
+            tweet_result = await generate_tweet(article.title, article.content)
+            generated_tweet = tweet_result.tweet
+            hashtags = tweet_result.hashtags
+        except Exception as e:
+            print(f"[WARN] Tweet generation failed: {e}")
 
-    # Score and summarize with AI
-    score_result = await score_article(article.title, article.content)
-    
-    # Generate tweet
-    tweet_result = await generate_tweet(article.title, article.content)
+    # 4. Generate embedding for dedup
+    embedding = None
+    try:
+        embedding = await generate_embedding(f"{article.title} {article.content[:500]}")
+    except Exception as e:
+        print(f"[WARN] Embedding failed: {e}")
 
-    # Save to database
+    # 5. Save to database
     saved = await db.save_article(
         title=article.title,
         url=article.url,
-        content=article.content,
+        content=article.content[:10000],
         source=article.source,
         published_at=article.published_at,
-        relevance_score=score_result.relevance,
-        newsworthiness_score=score_result.newsworthiness,
-        summary=score_result.summary,
-        generated_tweet=tweet_result.tweet,
-        hashtags=tweet_result.hashtags,
+        relevance_score=relevance,
+        newsworthiness_score=newsworthiness,
+        summary=summary,
+        generated_tweet=generated_tweet,
+        hashtags=hashtags,
         embedding=embedding,
     )
 
-    return Article(
-        id=str(saved.id),
-        title=saved.title,
-        url=saved.url,
-        content=saved.content,
-        source=saved.source,
-        published_at=saved.published_at,
-        created_at=saved.created_at,
-        relevance_score=saved.relevance_score,
-        summary=saved.summary,
-        generated_tweet=saved.generated_tweet,
-        hashtags=saved.hashtags or [],
-        embedding=embedding,
-        status=ArticleStatus.PENDING,
-    )
+    return {
+        "status": "created",
+        "id": str(saved.id),
+        "title": saved.title,
+        "source": saved.source,
+        "relevance_score": relevance,
+        "newsworthiness_score": newsworthiness,
+        "generated_tweet": generated_tweet,
+        "hashtags": hashtags,
+    }
 
 
-@router.get("/articles", response_model=list[Article])
-async def get_pending_articles(limit: int = 20):
-    """
-    Get pending articles for moderation.
-    """
-    articles = await db.get_pending_articles(limit)
+@router.get("/articles")
+async def list_articles(
+    limit: int = Query(20, ge=1, le=100),
+    status: Optional[str] = None,
+):
+    """Get articles, optionally filtered by status."""
+    if status:
+        articles = await db.get_articles_by_status(status, limit)
+    else:
+        articles = await db.get_pending_articles(limit)
+
     return [
-        Article(
-            id=str(a.id),
-            title=a.title,
-            url=a.url,
-            content=a.content,
-            source=a.source,
-            published_at=a.published_at,
-            created_at=a.created_at,
-            relevance_score=a.relevance_score,
-            summary=a.summary,
-            generated_tweet=a.generated_tweet,
-            hashtags=a.hashtags or [],
-            embedding=a.embedding,
-            status=ArticleStatus(a.status.value),
-        )
+        {
+            "id": str(a.id),
+            "title": a.title,
+            "url": a.url,
+            "source": a.source,
+            "relevance_score": a.relevance_score,
+            "newsworthiness_score": a.newsworthiness_score,
+            "summary": a.summary,
+            "generated_tweet": a.generated_tweet,
+            "hashtags": a.hashtags or [],
+            "status": a.status.value if a.status else "pending",
+            "created_at": str(a.created_at),
+        }
         for a in articles
     ]
 
 
 @router.post("/articles/{article_id}/approve")
-async def approve_article(article_id: str, approval: ArticleApproval):
-    """
-    Approve or reject an article.
-    """
-    status_map = {
-        "approve": ArticleStatus.APPROVED,
-        "reject": ArticleStatus.REJECTED,
-        "defer": ArticleStatus.DEFERRED,
-    }
-    
+async def approve_article(article_id: str, action: str, edited_tweet: Optional[str] = None):
+    """Approve, reject, or defer an article."""
+    from uuid import UUID
     from app.db.models import ArticleStatus as DBStatus
-    db_status = DBStatus(status_map[approval.action].value)
-    
+
+    valid_actions = {"approve": "approved", "reject": "rejected", "defer": "deferred"}
+    if action not in valid_actions:
+        raise HTTPException(status_code=400, detail=f"Invalid action. Use: {list(valid_actions.keys())}")
+
+    db_status = DBStatus(valid_actions[action])
     success = await db.update_article_status(
         article_id=UUID(article_id),
         status=db_status,
-        edited_tweet=approval.edited_tweet,
+        edited_tweet=edited_tweet,
     )
-    
+
     if not success:
         raise HTTPException(status_code=404, detail="Article not found")
-    
-    return {"status": "updated", "article_id": article_id, "action": approval.action}
 
-
-@router.post("/deduplicate", response_model=DeduplicationResponse)
-async def check_deduplication(request: DeduplicationRequest):
-    """
-    Check if an article is a duplicate of existing articles.
-    """
-    embedding = await generate_embedding(f"{request.title} {request.content[:500]}")
-    is_dup, similar_id, sim_score = await check_duplicate(embedding, request.threshold)
-
-    return DeduplicationResponse(
-        is_duplicate=is_dup,
-        similar_article_id=similar_id,
-        similarity_score=sim_score,
-    )
+    return {"status": "updated", "article_id": article_id, "action": action}

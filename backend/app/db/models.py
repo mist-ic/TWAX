@@ -39,7 +39,7 @@ class Article(Base):
     newsworthiness_score = Column(Integer, nullable=True)
     summary = Column(Text, nullable=True)
     generated_tweet = Column(String(280), nullable=True)
-    hashtags = Column(ARRAY(String), default=[], nullable=False)
+    hashtags = Column(ARRAY(String), default=[], nullable=True)
 
     # Embedding for deduplication (pgvector in production)
     embedding = Column(ARRAY(Float), nullable=True)

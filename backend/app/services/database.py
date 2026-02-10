@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
 from app.core.config import settings
@@ -12,14 +12,10 @@ from app.db.models import Article, ArticleStatus
 
 
 # Create async engine and session
-engine = create_async_engine(settings.DATABASE_URL, echo=False)
+# Fix sslmode for asyncpg (it uses 'ssl' instead of 'sslmode')
+database_url = settings.DATABASE_URL.replace("sslmode=", "ssl=")
+engine = create_async_engine(database_url, echo=False, pool_size=5, max_overflow=10)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-async def get_session() -> AsyncSession:
-    """Get database session."""
-    async with async_session() as session:
-        yield session
 
 
 async def save_article(
@@ -27,13 +23,13 @@ async def save_article(
     url: str,
     content: str,
     source: str,
-    published_at: Optional[datetime],
-    relevance_score: int,
-    newsworthiness_score: int,
-    summary: str,
-    generated_tweet: str,
-    hashtags: list[str],
-    embedding: list[float],
+    published_at: Optional[datetime] = None,
+    relevance_score: Optional[int] = None,
+    newsworthiness_score: Optional[int] = None,
+    summary: Optional[str] = None,
+    generated_tweet: Optional[str] = None,
+    hashtags: Optional[list[str]] = None,
+    embedding: Optional[list[float]] = None,
 ) -> Article:
     """Save a new article to the database."""
     async with async_session() as session:
@@ -47,7 +43,7 @@ async def save_article(
             newsworthiness_score=newsworthiness_score,
             summary=summary,
             generated_tweet=generated_tweet,
-            hashtags=hashtags,
+            hashtags=hashtags or [],
             embedding=embedding,
             status=ArticleStatus.PENDING,
         )
@@ -63,9 +59,19 @@ async def get_pending_articles(limit: int = 20) -> list[Article]:
         result = await session.execute(
             select(Article)
             .where(Article.status == ArticleStatus.PENDING)
-            .order_by(Article.relevance_score.desc())
+            .order_by(Article.relevance_score.desc().nullslast())
             .limit(limit)
         )
+        return result.scalars().all()
+
+
+async def get_articles_by_status(status: str, limit: int = 20) -> list[Article]:
+    """Get articles filtered by status."""
+    async with async_session() as session:
+        query = select(Article).order_by(Article.created_at.desc()).limit(limit)
+        if status != "all":
+            query = query.where(Article.status == ArticleStatus(status))
+        result = await session.execute(query)
         return result.scalars().all()
 
 
