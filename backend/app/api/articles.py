@@ -113,7 +113,7 @@ async def list_articles(
             "summary": a.summary,
             "generated_tweet": a.generated_tweet,
             "hashtags": a.hashtags or [],
-            "status": a.status.value if a.status else "pending",
+            "status": a.status or "pending",
             "created_at": str(a.created_at),
         }
         for a in articles
@@ -124,16 +124,14 @@ async def list_articles(
 async def approve_article(article_id: str, action: str, edited_tweet: Optional[str] = None):
     """Approve, reject, or defer an article."""
     from uuid import UUID
-    from app.db.models import ArticleStatus as DBStatus
 
     valid_actions = {"approve": "approved", "reject": "rejected", "defer": "deferred"}
     if action not in valid_actions:
         raise HTTPException(status_code=400, detail=f"Invalid action. Use: {list(valid_actions.keys())}")
 
-    db_status = DBStatus(valid_actions[action])
     success = await db.update_article_status(
         article_id=UUID(article_id),
-        status=db_status,
+        status=valid_actions[action],
         edited_tweet=edited_tweet,
     )
 

@@ -1,21 +1,40 @@
-"""Database service for article operations."""
+"""Database service using raw asyncpg (no SQLAlchemy dependency).
 
+Uses a connection pool for efficient async PostgreSQL access to Neon.
+"""
+
+import asyncpg
 from datetime import datetime
 from typing import Optional
-from uuid import UUID
-
-from sqlalchemy import select, update, func
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from uuid import UUID, uuid4
 
 from app.core.config import settings
-from app.db.models import Article, ArticleStatus
+from app.db.models import Article
+
+# Connection pool (lazy-initialized)
+_pool: Optional[asyncpg.Pool] = None
 
 
-# Create async engine and session
-# Fix sslmode for asyncpg (it uses 'ssl' instead of 'sslmode')
-database_url = settings.DATABASE_URL.replace("sslmode=", "ssl=")
-engine = create_async_engine(database_url, echo=False, pool_size=5, max_overflow=10)
-async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+def _get_dsn() -> str:
+    """Convert DATABASE_URL to asyncpg-compatible DSN."""
+    url = settings.DATABASE_URL
+    # asyncpg uses 'ssl' not 'sslmode'
+    url = url.replace("sslmode=", "ssl=")
+    # asyncpg uses postgresql:// not postgresql+asyncpg://
+    url = url.replace("postgresql+asyncpg://", "postgresql://")
+    return url
+
+
+async def get_pool() -> asyncpg.Pool:
+    """Get or create the connection pool."""
+    global _pool
+    if _pool is None:
+        _pool = await asyncpg.create_pool(
+            dsn=_get_dsn(),
+            min_size=1,
+            max_size=5,
+        )
+    return _pool
 
 
 async def save_article(
@@ -32,88 +51,106 @@ async def save_article(
     embedding: Optional[list[float]] = None,
 ) -> Article:
     """Save a new article to the database."""
-    async with async_session() as session:
-        article = Article(
-            title=title,
-            url=url,
-            content=content,
-            source=source,
-            published_at=published_at,
-            relevance_score=relevance_score,
-            newsworthiness_score=newsworthiness_score,
-            summary=summary,
-            generated_tweet=generated_tweet,
-            hashtags=hashtags or [],
-            embedding=embedding,
-            status=ArticleStatus.PENDING,
-        )
-        session.add(article)
-        await session.commit()
-        await session.refresh(article)
-        return article
+    pool = await get_pool()
+    article_id = uuid4()
+    now = datetime.utcnow()
+
+    await pool.execute(
+        """
+        INSERT INTO articles (
+            id, title, url, content, source, published_at, created_at,
+            relevance_score, newsworthiness_score, summary,
+            generated_tweet, hashtags, embedding, status
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        """,
+        article_id, title, url, content[:10000], source, published_at, now,
+        relevance_score, newsworthiness_score, summary,
+        generated_tweet, hashtags or [], embedding, "pending",
+    )
+
+    return Article(
+        id=article_id, title=title, url=url, content=content,
+        source=source, published_at=published_at, created_at=now,
+        relevance_score=relevance_score, newsworthiness_score=newsworthiness_score,
+        summary=summary, generated_tweet=generated_tweet,
+        hashtags=hashtags or [], embedding=embedding, status="pending",
+    )
 
 
-async def get_pending_articles(limit: int = 20) -> list[Article]:
-    """Get pending articles for moderation, ordered by relevance."""
-    async with async_session() as session:
-        result = await session.execute(
-            select(Article)
-            .where(Article.status == ArticleStatus.PENDING)
-            .order_by(Article.relevance_score.desc().nullslast())
-            .limit(limit)
-        )
-        return result.scalars().all()
-
-
-async def get_articles_by_status(status: str, limit: int = 20) -> list[Article]:
-    """Get articles filtered by status."""
-    async with async_session() as session:
-        query = select(Article).order_by(Article.created_at.desc()).limit(limit)
-        if status != "all":
-            query = query.where(Article.status == ArticleStatus(status))
-        result = await session.execute(query)
-        return result.scalars().all()
-
-
-async def update_article_status(
-    article_id: UUID,
-    status: ArticleStatus,
-    edited_tweet: Optional[str] = None,
-) -> bool:
-    """Update article status (approve/reject/defer)."""
-    async with async_session() as session:
-        values = {
-            "status": status,
-            "moderated_at": datetime.utcnow(),
-        }
-        if edited_tweet:
-            values["edited_tweet"] = edited_tweet
-
-        result = await session.execute(
-            update(Article)
-            .where(Article.id == article_id)
-            .values(**values)
-        )
-        await session.commit()
-        return result.rowcount > 0
+def _row_to_article(row: asyncpg.Record) -> Article:
+    """Convert a database row to an Article dataclass."""
+    return Article(
+        id=row["id"],
+        title=row["title"],
+        url=row["url"],
+        content=row["content"],
+        source=row["source"],
+        published_at=row.get("published_at"),
+        created_at=row.get("created_at"),
+        relevance_score=row.get("relevance_score"),
+        newsworthiness_score=row.get("newsworthiness_score"),
+        summary=row.get("summary"),
+        generated_tweet=row.get("generated_tweet"),
+        hashtags=row.get("hashtags") or [],
+        embedding=row.get("embedding"),
+        status=row.get("status", "pending"),
+        moderated_at=row.get("moderated_at"),
+        edited_tweet=row.get("edited_tweet"),
+    )
 
 
 async def get_article_by_url(url: str) -> Optional[Article]:
     """Check if article with URL already exists."""
-    async with async_session() as session:
-        result = await session.execute(
-            select(Article).where(Article.url == url)
-        )
-        return result.scalar_one_or_none()
+    pool = await get_pool()
+    row = await pool.fetchrow(
+        "SELECT * FROM articles WHERE url = $1", url
+    )
+    return _row_to_article(row) if row else None
 
 
-async def get_recent_embeddings(limit: int = 100) -> list[tuple[UUID, list[float]]]:
-    """Get recent article embeddings for deduplication."""
-    async with async_session() as session:
-        result = await session.execute(
-            select(Article.id, Article.embedding)
-            .where(Article.embedding.isnot(None))
-            .order_by(Article.created_at.desc())
-            .limit(limit)
+async def get_pending_articles(limit: int = 20) -> list[Article]:
+    """Get pending articles ordered by relevance."""
+    pool = await get_pool()
+    rows = await pool.fetch(
+        """
+        SELECT * FROM articles
+        WHERE status = 'pending'
+        ORDER BY relevance_score DESC NULLS LAST
+        LIMIT $1
+        """,
+        limit,
+    )
+    return [_row_to_article(r) for r in rows]
+
+
+async def get_articles_by_status(status: str, limit: int = 20) -> list[Article]:
+    """Get articles filtered by status."""
+    pool = await get_pool()
+    if status == "all":
+        rows = await pool.fetch(
+            "SELECT * FROM articles ORDER BY created_at DESC LIMIT $1", limit
         )
-        return [(row[0], row[1]) for row in result.all()]
+    else:
+        rows = await pool.fetch(
+            "SELECT * FROM articles WHERE status = $1 ORDER BY created_at DESC LIMIT $2",
+            status, limit,
+        )
+    return [_row_to_article(r) for r in rows]
+
+
+async def update_article_status(
+    article_id: UUID, status: str, edited_tweet: Optional[str] = None,
+) -> bool:
+    """Update article status (approve/reject/defer)."""
+    pool = await get_pool()
+    if edited_tweet:
+        result = await pool.execute(
+            "UPDATE articles SET status=$1, moderated_at=$2, edited_tweet=$3 WHERE id=$4",
+            status, datetime.utcnow(), edited_tweet, article_id,
+        )
+    else:
+        result = await pool.execute(
+            "UPDATE articles SET status=$1, moderated_at=$2 WHERE id=$3",
+            status, datetime.utcnow(), article_id,
+        )
+    return result != "UPDATE 0"
