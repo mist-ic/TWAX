@@ -13,9 +13,7 @@ from app.core.config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # Startup: Load embedding model
-    from app.services.embeddings import load_embedding_model
-    load_embedding_model()
+    # Embedding model loads lazily on first use (torch is slow to import)
     yield
     # Shutdown: cleanup if needed
 
