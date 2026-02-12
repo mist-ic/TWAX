@@ -80,20 +80,20 @@ export default function HistoryPage() {
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="flex flex-col min-h-screen">
+            <SidebarInset className="flex flex-col h-dvh overflow-hidden">
                 <Header />
 
                 <main className="flex-1 overflow-hidden">
                     <ScrollArea className="h-full">
-                        <div className="max-w-4xl mx-auto p-6 space-y-6">
+                        <div className="max-w-4xl mx-auto px-4 py-5 sm:px-6 sm:py-6 space-y-5 sm:space-y-6">
                             {/* Page Header */}
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h1 className="font-heading text-xl font-bold tracking-wide">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h1 className="font-heading text-lg sm:text-xl font-bold tracking-wide">
                                         HISTORY
                                     </h1>
-                                    <p className="text-sm text-muted-foreground font-body mt-1">
-                                        All processed articles and their outcomes
+                                    <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5 sm:mt-1">
+                                        All processed articles
                                     </p>
                                 </div>
 
@@ -178,7 +178,7 @@ export default function HistoryPage() {
                                                     key={article.id}
                                                     className="border-border/30 bg-card/50 hover:bg-card/70 transition-colors"
                                                 >
-                                                    <CardContent className="p-4 flex items-start gap-4">
+                                                    <CardContent className="p-3 sm:p-4 flex items-start gap-2.5 sm:gap-4">
                                                         {/* Status icon */}
                                                         <div className="pt-0.5">
                                                             <StatusIcon
@@ -191,24 +191,24 @@ export default function HistoryPage() {
 
                                                         {/* Content */}
                                                         <div className="flex-1 min-w-0 space-y-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <h3 className="font-heading text-sm font-bold truncate">
+                                                            <div className="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
+                                                                <h3 className="font-heading text-xs sm:text-sm font-bold truncate max-w-full">
                                                                     {article.title}
                                                                 </h3>
-                                                                <ScoreBadge score={article.relevance_score} />
+                                                                <ScoreBadge score={article.relevance_score} className="shrink-0" />
                                                             </div>
 
-                                                            <div className="flex items-center gap-2">
+                                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                                                                 <Badge
                                                                     variant="outline"
-                                                                    className="text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/30"
+                                                                    className="text-[9px] sm:text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/30"
                                                                 >
                                                                     {article.source}
                                                                 </Badge>
-                                                                {article.hashtags.map((tag) => (
+                                                                {article.hashtags.slice(0, 2).map((tag) => (
                                                                     <span
                                                                         key={tag}
-                                                                        className="text-[11px] text-[var(--twax-info)] font-body"
+                                                                        className="text-[10px] sm:text-[11px] text-[var(--twax-info)] font-body hidden sm:inline"
                                                                     >
                                                                         {tag}
                                                                     </span>

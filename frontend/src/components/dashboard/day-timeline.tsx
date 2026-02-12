@@ -49,7 +49,6 @@ export function DayTimeline({
             const isCurrent = s.id === currentSlotId;
             const isPast = slotMinutes < currentMinutes && !isCurrent;
 
-            // Check if we have an approved article for this slot
             const assignedArticle = approved?.[index];
 
             let status: TimeSlot["status"];
@@ -76,14 +75,13 @@ export function DayTimeline({
         onSlotSelect?.(slotId);
     };
 
-    // Stats
     const postedCount = slots.filter((s) => s.status === "posted").length;
     const totalSlots = slots.length;
 
     return (
-        <div className={cn("flex flex-col h-full", className)}>
+        <div className={cn("flex flex-col h-full overflow-hidden", className)}>
             {/* Header */}
-            <div className="px-4 py-3 border-b border-border/30">
+            <div className="shrink-0 px-4 py-3 border-b border-border/30">
                 <h2 className="font-heading text-sm font-bold tracking-wide">
                     TODAY&apos;S SCHEDULE
                 </h2>
@@ -93,17 +91,17 @@ export function DayTimeline({
             </div>
 
             {/* Timeline */}
-            <ScrollArea className="flex-1 px-3 py-3">
-                <div className="relative space-y-2">
-                    {/* Vertical line */}
-                    <div className="absolute left-[37px] top-4 bottom-4 w-px bg-border/30" />
+            <ScrollArea className="flex-1 min-h-0">
+                <div className="relative px-3 py-3 space-y-2">
+                    {/* Vertical connector line */}
+                    <div className="absolute left-[24px] top-6 bottom-6 w-px bg-border/30" />
 
                     {slots.map((slot) => (
-                        <div key={slot.id} className="relative">
+                        <div key={slot.id} className="relative pl-9">
                             {/* Timeline dot */}
                             <div
                                 className={cn(
-                                    "absolute left-[34px] top-[18px] z-10 h-2 w-2 rounded-full border-2",
+                                    "absolute left-[21px] top-[14px] z-10 h-[7px] w-[7px] rounded-full border-2",
                                     slot.status === "posted" &&
                                     "bg-[var(--twax-success)] border-[var(--twax-success)]",
                                     slot.status === "current" &&
@@ -115,14 +113,11 @@ export function DayTimeline({
                                 )}
                             />
 
-                            {/* Card offset to the right of the line */}
-                            <div className="ml-12">
-                                <SlotCard
-                                    slot={slot}
-                                    isSelected={selected === slot.id}
-                                    onClick={() => handleSelect(slot.id)}
-                                />
-                            </div>
+                            <SlotCard
+                                slot={slot}
+                                isSelected={selected === slot.id}
+                                onClick={() => handleSelect(slot.id)}
+                            />
                         </div>
                     ))}
                 </div>

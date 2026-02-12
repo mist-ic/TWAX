@@ -32,33 +32,31 @@ export function SlotCard({
             )}
             onClick={onClick}
         >
-            <CardContent className="p-3 flex items-center gap-3">
+            <CardContent className="p-2.5 flex items-center gap-2.5">
                 {/* Time */}
-                <div className="flex flex-col items-center min-w-[50px]">
-                    <span className="font-heading text-xs font-bold text-foreground">
-                        {slot.label}
-                    </span>
-                </div>
+                <span className="font-heading text-[11px] font-bold text-foreground tabular-nums shrink-0 w-[52px]">
+                    {slot.label}
+                </span>
 
                 {/* Status indicator */}
                 <StatusIndicator variant={slot.status} />
 
-                {/* Preview */}
-                <div className="flex-1 min-w-0">
+                {/* Preview — truncated, no overflow */}
+                <div className="flex-1 min-w-0 overflow-hidden">
                     {isPosted && slot.article ? (
-                        <p className="text-xs text-muted-foreground truncate font-body">
+                        <p className="text-[11px] text-muted-foreground truncate font-body">
                             {slot.article.generated_tweet ?? slot.article.title}
                         </p>
                     ) : isCurrent ? (
-                        <p className="text-xs text-primary font-body font-medium">
+                        <p className="text-[11px] text-primary font-body font-medium truncate">
                             Ready for selection
                         </p>
                     ) : slot.status === "skipped" ? (
-                        <p className="text-xs text-muted-foreground/50 font-body italic">
+                        <p className="text-[11px] text-muted-foreground/50 font-body italic truncate">
                             Skipped
                         </p>
                     ) : (
-                        <p className="text-xs text-muted-foreground/40 font-body">
+                        <p className="text-[11px] text-muted-foreground/40 font-body truncate">
                             Upcoming
                         </p>
                     )}

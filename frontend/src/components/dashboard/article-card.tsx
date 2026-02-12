@@ -53,31 +53,31 @@ export function ArticleCard({
                 className
             )}
         >
-            <CardContent className="p-5 space-y-4">
+            <CardContent className="p-3.5 sm:p-5 space-y-3 sm:space-y-4">
                 {/* ── Header: Source + Score ── */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
                         <Badge
                             variant="outline"
-                            className="text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/40"
+                            className="text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/40 shrink-0"
                         >
                             {article.source}
                         </Badge>
-                        {article.hashtags.map((tag) => (
+                        {article.hashtags.slice(0, 3).map((tag) => (
                             <span
                                 key={tag}
-                                className="text-[11px] text-[var(--twax-info)] font-body"
+                                className="text-[10px] sm:text-[11px] text-[var(--twax-info)] font-body"
                             >
                                 {tag}
                             </span>
                         ))}
                     </div>
-                    <ScoreBadge score={article.relevance_score} />
+                    <ScoreBadge score={article.relevance_score} className="shrink-0" />
                 </div>
 
                 {/* ── Title ── */}
                 <div>
-                    <h3 className="font-heading text-base font-bold leading-tight text-foreground">
+                    <h3 className="font-heading text-sm sm:text-base font-bold leading-tight text-foreground">
                         {article.title}
                     </h3>
                     {article.url && (
@@ -85,7 +85,7 @@ export function ArticleCard({
                             href={article.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-1 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                            className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-[11px] text-muted-foreground hover:text-primary transition-colors"
                         >
                             <ExternalLink className="h-3 w-3" />
                             Read original
@@ -95,7 +95,7 @@ export function ArticleCard({
 
                 {/* ── Summary ── */}
                 {article.summary && (
-                    <p className="text-sm text-muted-foreground leading-relaxed font-body">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-body">
                         {article.summary}
                     </p>
                 )}
@@ -131,8 +131,8 @@ export function ArticleCard({
                             onCancel={() => setIsEditing(false)}
                         />
                     ) : (
-                        <div className="rounded-lg bg-background/50 border border-border/30 p-3">
-                            <p className="text-sm font-body leading-relaxed text-foreground/90">
+                        <div className="rounded-lg bg-background/50 border border-border/30 p-2.5 sm:p-3">
+                            <p className="text-xs sm:text-sm font-body leading-relaxed text-foreground/90">
                                 {displayTweet || (
                                     <span className="italic text-muted-foreground">
                                         No tweet generated yet
@@ -145,15 +145,15 @@ export function ArticleCard({
 
                 {/* ── Actions ── */}
                 {!isEditing && (
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-center gap-1.5 sm:gap-2 pt-1">
                         <Button
                             size="sm"
                             onClick={handleApprove}
                             disabled={isActioning}
-                            className="flex-1 gap-1.5 bg-[var(--twax-success)]/15 text-[var(--twax-success)] border border-[var(--twax-success)]/25 hover:bg-[var(--twax-success)]/25 font-body"
+                            className="flex-1 gap-1 sm:gap-1.5 text-xs sm:text-sm bg-[var(--twax-success)]/15 text-[var(--twax-success)] border border-[var(--twax-success)]/25 hover:bg-[var(--twax-success)]/25 font-body h-8 sm:h-9"
                             variant="outline"
                         >
-                            <CheckCircle2 className="h-4 w-4" />
+                            <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                             Approve
                         </Button>
                         <Button
@@ -161,20 +161,20 @@ export function ArticleCard({
                             variant="outline"
                             onClick={() => onAction("defer")}
                             disabled={isActioning}
-                            className="gap-1.5 text-muted-foreground hover:text-primary border-border/40 font-body"
+                            className="gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-primary border-border/40 font-body h-8 sm:h-9"
                         >
-                            <SkipForward className="h-4 w-4" />
-                            Skip
+                            <SkipForward className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <span className="hidden xs:inline">Skip</span>
                         </Button>
                         <Button
                             size="sm"
                             variant="outline"
                             onClick={() => onAction("reject")}
                             disabled={isActioning}
-                            className="gap-1.5 text-muted-foreground hover:text-[var(--twax-danger)] border-border/40 font-body"
+                            className="gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-[var(--twax-danger)] border-border/40 font-body h-8 sm:h-9"
                         >
-                            <Archive className="h-4 w-4" />
-                            Archive
+                            <Archive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <span className="hidden xs:inline">Archive</span>
                         </Button>
                     </div>
                 )}
@@ -182,7 +182,7 @@ export function ArticleCard({
 
             {/* Edited indicator */}
             {editedTweet && (
-                <div className="absolute top-3 right-3">
+                <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3">
                     <div className="h-2 w-2 rounded-full bg-primary" />
                 </div>
             )}

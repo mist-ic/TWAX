@@ -42,25 +42,25 @@ export default function SettingsPage() {
     return (
         <SidebarProvider>
             <AppSidebar />
-            <SidebarInset className="flex flex-col min-h-screen">
+            <SidebarInset className="flex flex-col h-dvh overflow-hidden">
                 <Header />
 
                 <main className="flex-1 overflow-hidden">
                     <ScrollArea className="h-full">
-                        <div className="max-w-3xl mx-auto p-6 space-y-8">
+                        <div className="max-w-3xl mx-auto px-4 py-5 sm:px-6 sm:py-6 space-y-6 sm:space-y-8">
                             {/* Page Title */}
                             <div>
-                                <h1 className="font-heading text-xl font-bold tracking-wide">
+                                <h1 className="font-heading text-lg sm:text-xl font-bold tracking-wide">
                                     SETTINGS
                                 </h1>
-                                <p className="text-sm text-muted-foreground font-body mt-1">
+                                <p className="text-xs sm:text-sm text-muted-foreground font-body mt-0.5 sm:mt-1">
                                     Configure your TWAX Command Center
                                 </p>
                             </div>
 
                             {/* ── Backend Connection ── */}
                             <Card className="border-border/30 bg-card/50">
-                                <CardContent className="p-5 space-y-4">
+                                <CardContent className="p-4 sm:p-5 space-y-3 sm:space-y-4">
                                     <div className="flex items-center gap-2">
                                         <Server className="h-4 w-4 text-primary" />
                                         <h2 className="font-heading text-sm font-bold tracking-wide">
@@ -128,7 +128,7 @@ export default function SettingsPage() {
 
                             {/* ── Posting Schedule ── */}
                             <Card className="border-border/30 bg-card/50">
-                                <CardContent className="p-5 space-y-4">
+                                <CardContent className="p-4 sm:p-5 space-y-3 sm:space-y-4">
                                     <div className="flex items-center gap-2">
                                         <Clock className="h-4 w-4 text-primary" />
                                         <h2 className="font-heading text-sm font-bold tracking-wide">
@@ -136,7 +136,7 @@ export default function SettingsPage() {
                                         </h2>
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                                         {DEFAULT_TIME_SLOTS.map((slot) => (
                                             <div
                                                 key={slot.id}
@@ -157,7 +157,7 @@ export default function SettingsPage() {
 
                             {/* ── Platforms ── */}
                             <Card className="border-border/30 bg-card/50">
-                                <CardContent className="p-5 space-y-4">
+                                <CardContent className="p-4 sm:p-5 space-y-3 sm:space-y-4">
                                     <div className="flex items-center gap-2">
                                         <Globe className="h-4 w-4 text-primary" />
                                         <h2 className="font-heading text-sm font-bold tracking-wide">
@@ -212,7 +212,7 @@ export default function SettingsPage() {
 
                             {/* ── Stats Summary ── */}
                             <Card className="border-border/30 bg-card/50">
-                                <CardContent className="p-5 space-y-4">
+                                <CardContent className="p-4 sm:p-5 space-y-3 sm:space-y-4">
                                     <div className="flex items-center gap-2">
                                         <Activity className="h-4 w-4 text-primary" />
                                         <h2 className="font-heading text-sm font-bold tracking-wide">
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                                             >
                                                 <p
                                                     className={cn(
-                                                        "font-heading text-2xl font-bold tabular-nums",
+                                                        "font-heading text-xl sm:text-2xl font-bold tabular-nums",
                                                         stat.color
                                                     )}
                                                 >
@@ -262,7 +262,7 @@ export default function SettingsPage() {
 
                             {/* ── About ── */}
                             <Card className="border-border/30 bg-card/50">
-                                <CardContent className="p-5 space-y-3">
+                                <CardContent className="p-4 sm:p-5 space-y-3">
                                     <div className="flex items-center gap-2">
                                         <Zap className="h-4 w-4 text-primary" />
                                         <h2 className="font-heading text-sm font-bold tracking-wide">
