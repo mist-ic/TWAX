@@ -19,7 +19,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://localhost/twax"
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://frontend-mu-three-65.vercel.app",
+    ]
 
     # Gemini
     GEMINI_MODEL: str = "gemini-3-flash-preview"
