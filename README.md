@@ -9,7 +9,7 @@
 
 ## 🚀 What is TWAX?
 
-TWAX automatically aggregates tech news from RSS feeds, uses **Gemini 3 Flash** AI to score relevance, generates platform-optimized posts, presents them in a Tinder-style swipe UI for human approval, and publishes to **Twitter/X** and **Bluesky**.
+TWAX automatically aggregates tech news from RSS feeds, uses **Gemini 3 Flash** AI to score relevance, generates platform-optimized posts, presents them in a **Hybrid Dashboard** (Day Planner + Smart Queue) for human approval, and publishes to **Twitter/X** and **Bluesky**.
 
 **5 minutes/day** to maintain an active tech news presence.
 
@@ -22,8 +22,10 @@ TWAX automatically aggregates tech news from RSS feeds, uses **Gemini 3 Flash** 
 | 📰 **Smart Aggregation** | 10+ tech RSS feeds via n8n workflows |
 | 🤖 **AI Curation** | Gemini 3 Flash scoring + tweet generation |
 | 🎯 **Deduplication** | Semantic similarity with sentence-transformers |
-| 👆 **Swipe UI** | Approve/reject articles with keyboard shortcuts |
-| � **Multi-Platform** | Twitter/X + Bluesky publishing |
+| 🎛️ **Hybrid Dashboard** | Day Planner + Smart Queue — approve 6 articles in <5 min |
+| ⌨️ **Keyboard Shortcuts** | A=Approve, S=Skip, R=Archive, E=Edit |
+| 📱 **Mobile-Responsive** | Full mobile support with Sheet drawers, icon-only actions |
+| 📡 **Multi-Platform** | Twitter/X + Bluesky publishing |
 | 🗄️ **Serverless DB** | Neon PostgreSQL with async SQLAlchemy |
 
 ---
@@ -57,7 +59,7 @@ TWAX automatically aggregates tech news from RSS feeds, uses **Gemini 3 Flash** 
 | **Embeddings** | sentence-transformers (MiniLM) | ✅ Working |
 | **Database** | Neon PostgreSQL 17 | ✅ Connected |
 | **Orchestration** | n8n (self-hosted or cloud) | ✅ Configured |
-| **Frontend** | Next.js 15 + React 19 | ✅ Working |
+| **Frontend** | Next.js 15 + React 19 + shadcn/ui | ✅ Complete |
 | **Hosting** | Railway (backend) | ✅ Live |
 | **Twitter** | Twikit library | 🔧 Auth pending |
 | **Bluesky** | atproto SDK | ✅ Verified |
@@ -78,7 +80,7 @@ TWAX/
 │   │   ├── services/
 │   │   │   ├── ai.py        # Gemini integration
 │   │   │   ├── embeddings.py # Sentence transformers
-│   │   │   ├── database.py  # Async SQLAlchemy
+│   │   │   ├── database.py  # asyncpg connection pool
 │   │   │   └── publishing.py # Twitter/Bluesky
 │   │   ├── core/
 │   │   │   └── config.py    # Pydantic settings
@@ -86,9 +88,11 @@ TWAX/
 │   ├── pyproject.toml
 │   ├── requirements.txt     # CPU-only deps for Railway
 │   └── railway.json         # Railway config
-├── frontend/                # Next.js 15 app
-│   ├── app/                 # App router
-│   ├── components/          # React components
+├── frontend/                # Next.js 15 + shadcn/ui
+│   ├── src/app/             # App Router pages (dashboard, history, settings)
+│   ├── src/components/      # React components (layout, dashboard, shared)
+│   ├── src/hooks/           # Custom hooks (keyboard shortcuts)
+│   ├── src/lib/             # API layer (api.ts, queries.ts, types.ts)
 │   └── package.json
 ├── n8n/                     # Workflow exports
 │   └── rss-aggregation.json # RSS aggregator workflow
@@ -196,6 +200,12 @@ Import `n8n/rss-aggregation.json` into your n8n instance.
 - [x] Bluesky publishing (verified)
 - [x] Railway deployment
 - [x] n8n RSS aggregation
+- [x] 33/33 backend tests passing
+- [x] Hybrid Dashboard (Day Planner + Smart Queue)
+- [x] Keyboard shortcuts (A/S/R/E)
+- [x] Mobile-responsive UI
+- [x] History page with status filters
+- [x] Settings page with schedule display
 - [ ] Twitter OAuth flow
 - [ ] Frontend Vercel deployment
 - [ ] Mastodon support
