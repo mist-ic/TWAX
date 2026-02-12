@@ -3,7 +3,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StatusIndicator } from "@/components/shared/status-indicator";
+import { ExternalLink } from "lucide-react";
 import type { TimeSlot } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SlotCardProps {
     slot: TimeSlot;
@@ -62,6 +64,46 @@ export function SlotCard({
                     )}
                 </div>
             </CardContent>
+
+            {/* Expanded details when selected */}
+            <AnimatePresence>
+                {isSelected && isPosted && slot.article && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="px-3 pb-2.5 pt-0 border-t border-border/20">
+                            <p className="text-[11px] text-muted-foreground font-body leading-relaxed mt-2 whitespace-pre-wrap break-words">
+                                {slot.article.generated_tweet ?? slot.article.title}
+                            </p>
+
+                            <div className="flex items-center gap-2 mt-2">
+                                {slot.article.hashtags?.slice(0, 3).map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="text-[10px] text-[var(--twax-info)] font-body"
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+
+                                <a
+                                    href={slot.article.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-auto text-muted-foreground hover:text-primary transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <ExternalLink className="h-3 w-3" />
+                                </a>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </Card>
     );
 }
