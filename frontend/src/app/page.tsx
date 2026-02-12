@@ -8,7 +8,8 @@ import { SmartQueue } from "@/components/dashboard/smart-queue";
 import { DayTimeline } from "@/components/dashboard/day-timeline";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { VisuallyHidden } from "radix-ui";
 import { CalendarDays } from "lucide-react";
 
 export default function DashboardPage() {
@@ -53,7 +54,11 @@ export default function DashboardPage() {
                         <SheetContent
                             side="right"
                             className="w-[300px] sm:w-[340px] p-0 bg-background border-border/30"
+                            aria-describedby={undefined}
                         >
+                            <VisuallyHidden.Root>
+                                <SheetTitle>Day Schedule</SheetTitle>
+                            </VisuallyHidden.Root>
                             <DayTimeline
                                 className="h-full pt-10"
                                 onSlotSelect={() => setScheduleOpen(false)}
