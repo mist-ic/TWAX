@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { ScoreBadge } from "@/components/shared/score-badge";
 import { TweetEditor } from "./tweet-editor";
 import type { Article, ArticleAction } from "@/lib/types";
+import { log } from "@/lib/logger";
 
 interface ArticleCardProps {
     article: Article;
@@ -36,10 +37,12 @@ export function ArticleCard({
     const displayTweet = editedTweet ?? article.generated_tweet ?? "";
 
     const handleApprove = () => {
+        log.component("ArticleCard", `Approve: "${article.title.slice(0, 50)}..."${editedTweet ? " (edited tweet)" : ""}`);
         onAction("approve", editedTweet ?? undefined);
     };
 
     const handleSaveTweet = (tweet: string) => {
+        log.component("ArticleCard", `Tweet edited: "${tweet.slice(0, 60)}..."`);
         setEditedTweet(tweet);
         setIsEditing(false);
     };

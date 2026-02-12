@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { SlotCard } from "./slot-card";
 import { DEFAULT_TIME_SLOTS, type TimeSlot } from "@/lib/types";
 import { useApprovedArticles } from "@/lib/queries";
+import { log } from "@/lib/logger";
 
 interface DayTimelineProps {
     selectedSlotId?: string;
@@ -76,7 +77,12 @@ export function DayTimeline({
     };
 
     const postedCount = slots.filter((s) => s.status === "posted").length;
+    const currentCount = slots.filter((s) => s.status === "current").length;
+    const upcomingCount = slots.filter((s) => s.status === "upcoming").length;
+    const skippedCount = slots.filter((s) => s.status === "skipped").length;
     const totalSlots = slots.length;
+
+    log.component("Timeline", `Slots: ${postedCount} posted, ${currentCount} current, ${upcomingCount} upcoming, ${skippedCount} skipped`);
 
     return (
         <div className={cn("flex flex-col h-full overflow-hidden", className)}>

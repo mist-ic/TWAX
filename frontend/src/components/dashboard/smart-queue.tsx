@@ -8,6 +8,7 @@ import { usePendingArticles, useApproveArticle } from "@/lib/queries";
 import { ArticleCard } from "./article-card";
 import type { ArticleAction } from "@/lib/types";
 import { toast } from "sonner";
+import { log } from "@/lib/logger";
 
 interface SmartQueueProps {
     className?: string;
@@ -28,6 +29,7 @@ export function SmartQueue({ className }: SmartQueueProps) {
         action: ArticleAction,
         editedTweet?: string
     ) => {
+        log.component("SmartQueue", `User action: ${action} article ${articleId}${editedTweet ? " (with edited tweet)" : ""}`);
         approveMutation.mutate(
             { articleId, action, editedTweet },
             {
@@ -78,6 +80,8 @@ export function SmartQueue({ className }: SmartQueueProps) {
     }
 
     const pending = articles ?? [];
+
+    log.component("SmartQueue", `Rendering: ${pending.length} pending articles`);
 
     return (
         <div className={cn("space-y-4 min-w-0", className)}>

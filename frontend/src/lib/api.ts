@@ -10,6 +10,7 @@ import type {
     TweetOutput,
     HealthResponse,
 } from "./types";
+import { log } from "./logger";
 
 const API_BASE =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -22,17 +23,38 @@ async function apiFetch<T>(
     path: string,
     options?: RequestInit
 ): Promise<T> {
-    const res = await fetch(`${API_BASE}${path}`, {
-        headers: { "Content-Type": "application/json", ...options?.headers },
-        ...options,
-    });
+    const method = options?.method || "GET";
+    const url = `${API_BASE}${path}`;
+    const start = performance.now();
 
-    if (!res.ok) {
-        const error = await res.text().catch(() => "Unknown error");
-        throw new Error(`API ${res.status}: ${error}`);
+    log.api("API", `${method} ${path} → sending...`);
+
+    try {
+        const res = await fetch(url, {
+            headers: { "Content-Type": "application/json", ...options?.headers },
+            ...options,
+        });
+
+        const elapsed = Math.round(performance.now() - start);
+
+        if (!res.ok) {
+            const error = await res.text().catch(() => "Unknown error");
+            log.error("API", `${method} ${path} → ${res.status} (${elapsed}ms)`, error);
+            throw new Error(`API ${res.status}: ${error}`);
+        }
+
+        const data = await res.json() as T;
+        const itemCount = Array.isArray(data) ? `${data.length} items` : "object";
+        log.api("API", `${method} ${path} → ${res.status} (${elapsed}ms, ${itemCount})`);
+
+        return data;
+    } catch (err) {
+        const elapsed = Math.round(performance.now() - start);
+        if (!(err instanceof Error && err.message.startsWith("API "))) {
+            log.error("API", `${method} ${path} → NETWORK ERROR (${elapsed}ms)`, err);
+        }
+        throw err;
     }
-
-    return res.json() as Promise<T>;
 }
 
 /* ─── Mock Data ─── */
@@ -137,6 +159,7 @@ export async function fetchArticles(
     limit: number = 20
 ): Promise<Article[]> {
     if (USE_MOCK) {
+        log.api("API", `fetchArticles(status=${status ?? "all"}) → MOCK (${MOCK_ARTICLES.length} total)`);
         const filtered = status
             ? MOCK_ARTICLES.filter((a) => a.status === status)
             : MOCK_ARTICLES;
@@ -156,6 +179,7 @@ export async function approveArticle(
     editedTweet?: string
 ): Promise<ApproveResponse> {
     if (USE_MOCK) {
+        log.api("API", `approveArticle(${articleId}, ${action}) → MOCK`);
         const article = MOCK_ARTICLES.find((a) => a.id === articleId);
         if (article) {
             article.status =
@@ -184,6 +208,7 @@ export async function generateTweet(
     content: string
 ): Promise<TweetOutput> {
     if (USE_MOCK) {
+        log.api("API", `generateTweet(${articleId}) → MOCK`);
         return {
             tweet: `✨ ${title.slice(0, 200)} — fascinating implications for the tech industry.`,
             hashtags: ["#AI", "#Tech"],
@@ -209,6 +234,7 @@ export async function regenerateTweet(
     feedback?: string
 ): Promise<TweetOutput> {
     if (USE_MOCK) {
+        log.api("API", `regenerateTweet(${articleId}) → MOCK`);
         return {
             tweet: `🔥 Breaking: ${title.slice(0, 180)} — this changes everything.`,
             hashtags: ["#TechNews"],
@@ -230,6 +256,7 @@ export async function regenerateTweet(
 
 export async function checkHealth(): Promise<HealthResponse> {
     if (USE_MOCK) {
+        log.api("API", "checkHealth() → MOCK (healthy)");
         return { status: "healthy", service: "twax-backend (mock)" };
     }
 

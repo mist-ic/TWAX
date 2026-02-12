@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Activity } from "lucide-react";
 import { usePendingArticles, useApprovedArticles } from "@/lib/queries";
 import { CountdownTimer } from "@/components/shared/countdown-timer";
+import { log } from "@/lib/logger";
 
 export function Header() {
     const { data: pending } = usePendingArticles();
@@ -13,6 +14,8 @@ export function Header() {
 
     const pendingCount = pending?.length ?? 0;
     const approvedCount = approved?.length ?? 0;
+
+    log.component("Header", `Pending: ${pendingCount}, Approved today: ${approvedCount}`);
 
     return (
         <header className="flex h-12 sm:h-14 items-center gap-2 sm:gap-3 border-b border-border/40 px-3 sm:px-4 bg-background/80 backdrop-blur-sm shrink-0 overflow-hidden">

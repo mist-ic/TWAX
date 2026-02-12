@@ -1,10 +1,11 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { log } from "@/lib/logger";
 
 export function Providers({ children }: { children: React.ReactNode }) {
     const [queryClient] = useState(
@@ -22,6 +23,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 },
             })
     );
+
+    useEffect(() => {
+        log.startup();
+    }, []);
 
     return (
         <ThemeProvider

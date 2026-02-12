@@ -9,6 +9,7 @@ import {
     regenerateTweet,
     checkHealth,
 } from "./api";
+import { log } from "./logger";
 import type { Article, ArticleAction, ArticleStatus } from "./types";
 
 /* ─── Query Keys ─── */
@@ -26,7 +27,16 @@ export function useArticles(status?: ArticleStatus, limit: number = 20) {
         queryKey: status
             ? queryKeys.articlesByStatus(status)
             : queryKeys.articles,
-        queryFn: () => fetchArticles(status, limit),
+        queryFn: async () => {
+            const key = status ? `articles/${status}` : "articles";
+            log.query("QUERY", `${key} → fetching (limit=${limit})`);
+            const data = await fetchArticles(status, limit);
+            log.query("QUERY", `${key} → success (${data.length} items)`, {
+                ids: data.slice(0, 3).map(a => a.id),
+                titles: data.slice(0, 3).map(a => a.title.slice(0, 50)),
+            });
+            return data;
+        },
         staleTime: 30 * 1000,
     });
 }
@@ -42,8 +52,13 @@ export function useApprovedArticles(limit: number = 20) {
 export function useHealth() {
     return useQuery({
         queryKey: queryKeys.health,
-        queryFn: checkHealth,
-        refetchInterval: 60 * 1000, // Poll every 60s
+        queryFn: async () => {
+            log.query("QUERY", "health → fetching");
+            const data = await checkHealth();
+            log.query("QUERY", `health → ${data.status} (${data.service})`);
+            return data;
+        },
+        refetchInterval: 60 * 1000,
         staleTime: 30 * 1000,
         retry: 1,
     });
@@ -63,7 +78,10 @@ export function useApproveArticle() {
             articleId: string;
             action: ArticleAction;
             editedTweet?: string;
-        }) => approveArticle(articleId, action, editedTweet),
+        }) => {
+            log.mutation("MUTATION", `${action} ${articleId} → sending...`);
+            return approveArticle(articleId, action, editedTweet);
+        },
 
         // Optimistic update — immediately move article out of pending
         onMutate: async ({ articleId, action }) => {
@@ -77,27 +95,39 @@ export function useApproveArticle() {
 
             // Optimistically remove from pending
             if (previousPending) {
+                const newPending = previousPending.filter((a) => a.id !== articleId);
                 queryClient.setQueryData<Article[]>(
                     queryKeys.articlesByStatus("pending"),
-                    previousPending.filter((a) => a.id !== articleId)
+                    newPending
+                );
+                log.optimistic(
+                    "OPTIMISTIC",
+                    `${action} ${articleId} → removed from pending (${previousPending.length}→${newPending.length} items)`
                 );
             }
 
             return { previousPending };
         },
 
-        onError: (_err, _vars, context) => {
+        onError: (err, vars, context) => {
+            log.error("MUTATION", `${vars.action} ${vars.articleId} → FAILED`, err);
             // Roll back on error
             if (context?.previousPending) {
                 queryClient.setQueryData(
                     queryKeys.articlesByStatus("pending"),
                     context.previousPending
                 );
+                log.optimistic("OPTIMISTIC", `Rolled back pending cache (restored ${context.previousPending.length} items)`);
             }
+        },
+
+        onSuccess: (_data, vars) => {
+            log.mutation("MUTATION", `${vars.action} ${vars.articleId} → success ✅`);
         },
 
         onSettled: () => {
             // Refetch to sync with server
+            log.query("QUERY", "articles → invalidating all caches");
             queryClient.invalidateQueries({ queryKey: queryKeys.articles });
         },
     });
@@ -115,6 +145,18 @@ export function useRegenerateTweet() {
             title: string;
             content: string;
             feedback?: string;
-        }) => regenerateTweet(articleId, title, content, feedback),
+        }) => {
+            log.mutation("MUTATION", `regenerate tweet for ${articleId} → sending...`);
+            return regenerateTweet(articleId, title, content, feedback);
+        },
+        onSuccess: (_data, vars) => {
+            log.mutation("MUTATION", `regenerate tweet for ${vars.articleId} → success ✅`, {
+                tweet: _data.tweet.slice(0, 60) + "...",
+                hashtags: _data.hashtags,
+            });
+        },
+        onError: (err, vars) => {
+            log.error("MUTATION", `regenerate tweet for ${vars.articleId} → FAILED`, err);
+        },
     });
 }
