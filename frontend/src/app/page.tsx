@@ -22,22 +22,22 @@ export default function DashboardPage() {
                 <Header />
 
                 {/* ── Main Content: Smart Queue + Day Timeline ── */}
-                <main className="flex flex-1 min-h-0">
+                <main className="flex flex-1 min-h-0 overflow-hidden">
                     {/* Smart Queue — scrollable center area */}
-                    <div className="flex-1 overflow-y-auto scrollbar-thin">
+                    <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
                         <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-6">
                             <SmartQueue />
                         </div>
                     </div>
 
                     {/* Day Timeline — desktop: fixed right panel */}
-                    <aside className="hidden xl:flex w-[280px] shrink-0 border-l border-border/30 bg-card/20 overflow-hidden">
+                    <aside className="hidden xl:flex w-[300px] shrink-0 border-l border-border/30 bg-card/20 overflow-hidden">
                         <DayTimeline className="w-full" />
                     </aside>
                 </main>
 
                 {/* ── Footer ── */}
-                <footer className="flex items-center justify-center gap-3 sm:gap-4 border-t border-border/20 bg-background/50 py-2 px-3">
+                <footer className="flex items-center justify-center gap-3 sm:gap-4 border-t border-border/20 bg-background/50 py-2 px-3 shrink-0">
                     {/* Mobile: Schedule drawer trigger */}
                     <Sheet open={scheduleOpen} onOpenChange={setScheduleOpen}>
                         <SheetTrigger asChild>

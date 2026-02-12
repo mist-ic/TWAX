@@ -7,7 +7,6 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     DropdownMenu,
@@ -103,11 +102,13 @@ export default function HistoryPage() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="gap-2 font-body border-border/40"
+                                            className="gap-2 font-body border-border/40 shrink-0"
                                         >
                                             <Filter className="h-3.5 w-3.5" />
-                                            {STATUS_OPTIONS.find((o) => o.value === statusFilter)
-                                                ?.label ?? "All"}
+                                            <span className="hidden sm:inline">
+                                                {STATUS_OPTIONS.find((o) => o.value === statusFilter)
+                                                    ?.label ?? "All"}
+                                            </span>
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
@@ -176,61 +177,66 @@ export default function HistoryPage() {
                                             return (
                                                 <Card
                                                     key={article.id}
-                                                    className="border-border/30 bg-card/50 hover:bg-card/70 transition-colors"
+                                                    className="border-border/30 bg-card/50 hover:bg-card/70 transition-colors overflow-hidden"
                                                 >
-                                                    <CardContent className="p-3 sm:p-4 flex items-start gap-2.5 sm:gap-4">
-                                                        {/* Status icon */}
-                                                        <div className="pt-0.5">
-                                                            <StatusIcon
-                                                                className={cn(
-                                                                    "h-5 w-5",
-                                                                    STATUS_COLOR[article.status]
-                                                                )}
-                                                            />
-                                                        </div>
-
-                                                        {/* Content */}
-                                                        <div className="flex-1 min-w-0 space-y-1">
-                                                            <div className="flex items-start sm:items-center gap-2 flex-col sm:flex-row">
-                                                                <h3 className="font-heading text-xs sm:text-sm font-bold truncate max-w-full">
-                                                                    {article.title}
-                                                                </h3>
-                                                                <ScoreBadge score={article.relevance_score} className="shrink-0" />
+                                                    <CardContent className="p-3 sm:p-4 overflow-hidden">
+                                                        <div className="flex items-start gap-2.5 sm:gap-3">
+                                                            {/* Status icon */}
+                                                            <div className="pt-0.5 shrink-0">
+                                                                <StatusIcon
+                                                                    className={cn(
+                                                                        "h-4 w-4 sm:h-5 sm:w-5",
+                                                                        STATUS_COLOR[article.status]
+                                                                    )}
+                                                                />
                                                             </div>
 
-                                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-                                                                <Badge
-                                                                    variant="outline"
-                                                                    className="text-[9px] sm:text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/30"
-                                                                >
-                                                                    {article.source}
-                                                                </Badge>
-                                                                {article.hashtags.slice(0, 2).map((tag) => (
-                                                                    <span
-                                                                        key={tag}
-                                                                        className="text-[10px] sm:text-[11px] text-[var(--twax-info)] font-body hidden sm:inline"
+                                                            {/* Content */}
+                                                            <div className="flex-1 min-w-0 space-y-1 overflow-hidden">
+                                                                {/* Title & Score */}
+                                                                <div className="flex items-start gap-2">
+                                                                    <h3 className="font-heading text-xs sm:text-sm font-bold leading-snug line-clamp-2 flex-1 min-w-0">
+                                                                        {article.title}
+                                                                    </h3>
+                                                                    <ScoreBadge score={article.relevance_score} className="shrink-0 mt-0.5" />
+                                                                </div>
+
+                                                                {/* Source + Tags */}
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                                    <Badge
+                                                                        variant="outline"
+                                                                        className="text-[9px] sm:text-[10px] uppercase tracking-wider font-heading text-muted-foreground border-border/30"
                                                                     >
-                                                                        {tag}
-                                                                    </span>
-                                                                ))}
+                                                                        {article.source}
+                                                                    </Badge>
+                                                                    {article.hashtags.slice(0, 2).map((tag) => (
+                                                                        <span
+                                                                            key={tag}
+                                                                            className="text-[10px] sm:text-[11px] text-[var(--twax-info)] font-body hidden sm:inline"
+                                                                        >
+                                                                            {tag}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+
+                                                                {/* Tweet preview */}
+                                                                {article.generated_tweet && (
+                                                                    <p className="text-xs text-muted-foreground font-body leading-relaxed mt-1 line-clamp-2 break-words">
+                                                                        {article.generated_tweet}
+                                                                    </p>
+                                                                )}
                                                             </div>
 
-                                                            {article.generated_tweet && (
-                                                                <p className="text-xs text-muted-foreground font-body leading-relaxed mt-1 line-clamp-2">
-                                                                    {article.generated_tweet}
-                                                                </p>
-                                                            )}
+                                                            {/* External link — hidden on mobile */}
+                                                            <a
+                                                                href={article.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-muted-foreground hover:text-primary transition-colors shrink-0 hidden sm:block"
+                                                            >
+                                                                <ExternalLink className="h-4 w-4" />
+                                                            </a>
                                                         </div>
-
-                                                        {/* External link */}
-                                                        <a
-                                                            href={article.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-                                                        >
-                                                            <ExternalLink className="h-4 w-4" />
-                                                        </a>
                                                     </CardContent>
                                                 </Card>
                                             );

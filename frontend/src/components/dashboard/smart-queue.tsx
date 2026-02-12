@@ -43,7 +43,7 @@ export function SmartQueue({ className }: SmartQueueProps) {
 
     if (isLoading) {
         return (
-            <div className={cn("space-y-4", className)}>
+            <div className={cn("space-y-4 min-w-0", className)}>
                 <div className="flex items-center justify-between mb-2">
                     <h2 className="font-heading text-lg font-bold tracking-wide">
                         SMART QUEUE
@@ -61,7 +61,7 @@ export function SmartQueue({ className }: SmartQueueProps) {
 
     if (error) {
         return (
-            <div className={cn("space-y-4", className)}>
+            <div className={cn("space-y-4 min-w-0", className)}>
                 <h2 className="font-heading text-lg font-bold tracking-wide">
                     SMART QUEUE
                 </h2>
@@ -80,7 +80,7 @@ export function SmartQueue({ className }: SmartQueueProps) {
     const pending = articles ?? [];
 
     return (
-        <div className={cn("space-y-4", className)}>
+        <div className={cn("space-y-4 min-w-0", className)}>
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h2 className="font-heading text-lg font-bold tracking-wide">

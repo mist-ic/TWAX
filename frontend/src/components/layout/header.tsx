@@ -15,7 +15,7 @@ export function Header() {
     const approvedCount = approved?.length ?? 0;
 
     return (
-        <header className="flex h-12 sm:h-14 items-center gap-2 sm:gap-3 border-b border-border/40 px-3 sm:px-4 bg-background/80 backdrop-blur-sm shrink-0">
+        <header className="flex h-12 sm:h-14 items-center gap-2 sm:gap-3 border-b border-border/40 px-3 sm:px-4 bg-background/80 backdrop-blur-sm shrink-0 overflow-hidden">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground shrink-0" />
 
             <Separator orientation="vertical" className="h-4 sm:h-5 hidden sm:block" />

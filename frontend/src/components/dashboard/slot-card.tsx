@@ -24,7 +24,7 @@ export function SlotCard({
     return (
         <Card
             className={cn(
-                "cursor-pointer border-border/30 bg-card/50 transition-all duration-200",
+                "cursor-pointer border-border/30 bg-card/50 transition-all duration-200 overflow-hidden",
                 "hover:border-border/50 hover:bg-card/70",
                 isSelected && "border-primary/40 bg-primary/5 ring-1 ring-primary/20",
                 isCurrent && "animate-pulse-glow border-primary/30",

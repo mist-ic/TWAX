@@ -53,7 +53,7 @@ export function ArticleCard({
                 className
             )}
         >
-            <CardContent className="p-3.5 sm:p-5 space-y-3 sm:space-y-4">
+            <CardContent className="p-3.5 sm:p-5 space-y-3 sm:space-y-4 overflow-hidden">
                 {/* ── Header: Source + Score ── */}
                 <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
@@ -76,8 +76,8 @@ export function ArticleCard({
                 </div>
 
                 {/* ── Title ── */}
-                <div>
-                    <h3 className="font-heading text-sm sm:text-base font-bold leading-tight text-foreground">
+                <div className="min-w-0">
+                    <h3 className="font-heading text-sm sm:text-base font-bold leading-tight text-foreground break-words">
                         {article.title}
                     </h3>
                     {article.url && (
@@ -87,7 +87,7 @@ export function ArticleCard({
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 mt-1 text-[10px] sm:text-[11px] text-muted-foreground hover:text-primary transition-colors"
                         >
-                            <ExternalLink className="h-3 w-3" />
+                            <ExternalLink className="h-3 w-3 shrink-0" />
                             Read original
                         </a>
                     )}
@@ -95,7 +95,7 @@ export function ArticleCard({
 
                 {/* ── Summary ── */}
                 {article.summary && (
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-body">
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed font-body break-words">
                         {article.summary}
                     </p>
                 )}
@@ -103,7 +103,7 @@ export function ArticleCard({
                 <Separator className="bg-border/30" />
 
                 {/* ── Tweet Section ── */}
-                <div className="space-y-2">
+                <div className="space-y-2 min-w-0">
                     <div className="flex items-center justify-between">
                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-heading">
                             Generated Tweet
@@ -131,8 +131,8 @@ export function ArticleCard({
                             onCancel={() => setIsEditing(false)}
                         />
                     ) : (
-                        <div className="rounded-lg bg-background/50 border border-border/30 p-2.5 sm:p-3">
-                            <p className="text-xs sm:text-sm font-body leading-relaxed text-foreground/90">
+                        <div className="rounded-lg bg-background/50 border border-border/30 p-2.5 sm:p-3 overflow-hidden">
+                            <p className="text-xs sm:text-sm font-body leading-relaxed text-foreground/90 break-words">
                                 {displayTweet || (
                                     <span className="italic text-muted-foreground">
                                         No tweet generated yet
@@ -153,7 +153,7 @@ export function ArticleCard({
                             className="flex-1 gap-1 sm:gap-1.5 text-xs sm:text-sm bg-[var(--twax-success)]/15 text-[var(--twax-success)] border border-[var(--twax-success)]/25 hover:bg-[var(--twax-success)]/25 font-body h-8 sm:h-9"
                             variant="outline"
                         >
-                            <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                             Approve
                         </Button>
                         <Button
@@ -163,8 +163,8 @@ export function ArticleCard({
                             disabled={isActioning}
                             className="gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-primary border-border/40 font-body h-8 sm:h-9"
                         >
-                            <SkipForward className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            <span className="hidden xs:inline">Skip</span>
+                            <SkipForward className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                            <span className="hidden sm:inline">Skip</span>
                         </Button>
                         <Button
                             size="sm"
@@ -173,8 +173,8 @@ export function ArticleCard({
                             disabled={isActioning}
                             className="gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-[var(--twax-danger)] border-border/40 font-body h-8 sm:h-9"
                         >
-                            <Archive className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                            <span className="hidden xs:inline">Archive</span>
+                            <Archive className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                            <span className="hidden sm:inline">Archive</span>
                         </Button>
                     </div>
                 )}
