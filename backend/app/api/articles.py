@@ -97,10 +97,7 @@ async def list_articles(
     status: Optional[str] = None,
 ):
     """Get articles, optionally filtered by status."""
-    if status:
-        articles = await db.get_articles_by_status(status, limit)
-    else:
-        articles = await db.get_pending_articles(limit)
+    articles = await db.get_articles_by_status(status or "all", limit)
 
     return [
         {
