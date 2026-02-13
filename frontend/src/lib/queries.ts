@@ -160,3 +160,23 @@ export function useRegenerateTweet() {
         },
     });
 }
+
+/* ─── Fetch Articles ─── */
+
+export function useFetchArticles() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async () => {
+            const { fetchNewArticles } = await import("./api");
+            log.mutation("MUTATION", "fetch articles → sending...");
+            return fetchNewArticles();
+        },
+        onSuccess: (data) => {
+            log.mutation("MUTATION", `fetch articles → ${data.new} new, ${data.duplicates} dups ✅`);
+            qc.invalidateQueries({ queryKey: ["articles"] });
+        },
+        onError: (err) => {
+            log.error("MUTATION", "fetch articles → FAILED", err);
+        },
+    });
+}

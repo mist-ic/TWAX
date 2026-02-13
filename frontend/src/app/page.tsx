@@ -7,14 +7,32 @@ import { Header } from "@/components/layout/header";
 import { SmartQueue } from "@/components/dashboard/smart-queue";
 import { DayTimeline } from "@/components/dashboard/day-timeline";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { useFetchArticles } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { VisuallyHidden } from "radix-ui";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function DashboardPage() {
     useKeyboardShortcuts();
     const [scheduleOpen, setScheduleOpen] = useState(false);
+    const fetchMutation = useFetchArticles();
+
+    const handleFetch = () => {
+        toast.info("Fetching articles from RSS feeds...", { duration: 3000 });
+        fetchMutation.mutate(undefined, {
+            onSuccess: (data) => {
+                toast.success(
+                    `Found ${data.fetched} articles: ${data.new} new, ${data.duplicates} duplicates`,
+                    { duration: 5000 }
+                );
+            },
+            onError: (err) => {
+                toast.error(`Fetch failed: ${err.message}`, { duration: 5000 });
+            },
+        });
+    };
 
     return (
         <SidebarProvider>
@@ -27,6 +45,26 @@ export default function DashboardPage() {
                     {/* Smart Queue — scrollable center area */}
                     <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden scrollbar-thin">
                         <div className="mx-auto max-w-2xl px-4 py-5 sm:px-6 sm:py-6">
+                            {/* Fetch button */}
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-sm font-heading font-semibold text-muted-foreground/80 uppercase tracking-wider">
+                                    Smart Queue
+                                </h2>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleFetch}
+                                    disabled={fetchMutation.isPending}
+                                    className="gap-1.5 text-xs"
+                                >
+                                    {fetchMutation.isPending ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Download className="h-3.5 w-3.5" />
+                                    )}
+                                    {fetchMutation.isPending ? "Fetching..." : "Fetch Articles"}
+                                </Button>
+                            </div>
                             <SmartQueue />
                         </div>
                     </div>

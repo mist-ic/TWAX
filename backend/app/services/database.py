@@ -107,6 +107,13 @@ async def save_article(
     )
 
 
+async def get_article(article_id: UUID) -> Optional[Article]:
+    """Get a single article by ID."""
+    pool = await get_pool()
+    row = await pool.fetchrow("SELECT * FROM articles WHERE id = $1", article_id)
+    return _row_to_article(row) if row else None
+
+
 async def get_article_by_url(url: str) -> Optional[Article]:
     """Check if article with URL already exists."""
     pool = await get_pool()
@@ -156,3 +163,12 @@ async def update_article_status(
             status, datetime.utcnow(), article_id,
         )
     return result != "UPDATE 0"
+
+
+async def delete_all_articles() -> int:
+    """Delete all articles from the database. Returns count of deleted rows."""
+    pool = await get_pool()
+    result = await pool.execute("DELETE FROM articles")
+    # result is like "DELETE 42"
+    count = int(result.split()[-1]) if result else 0
+    return count

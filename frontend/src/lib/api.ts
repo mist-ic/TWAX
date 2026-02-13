@@ -262,3 +262,29 @@ export async function checkHealth(): Promise<HealthResponse> {
 
     return apiFetch<HealthResponse>("/health");
 }
+
+/* ─── Fetch Pipeline ─── */
+
+export interface FetchResult {
+    fetched: number;
+    new: number;
+    duplicates: number;
+    errors: number;
+    articles: Array<{
+        id: string;
+        title: string;
+        source: string;
+        relevance: number | null;
+        newsworthiness: number | null;
+        tweet: string | null;
+        hashtags: string[];
+    }>;
+}
+
+export async function fetchNewArticles(): Promise<FetchResult> {
+    return apiFetch<FetchResult>("/api/fetch", { method: "POST" });
+}
+
+export async function deleteAllArticles(): Promise<{ deleted: number }> {
+    return apiFetch<{ deleted: number }>("/api/articles", { method: "DELETE" });
+}

@@ -1,6 +1,7 @@
 """Gemini AI service for scoring and tweet generation.
 
 Uses the latest google-genai SDK (2026) with native Pydantic structured output.
+Uses client.aio for async operations (required in FastAPI async context).
 All heavy imports (google.genai) are lazy to avoid blocking server startup.
 """
 
@@ -59,7 +60,7 @@ async def score_article(title: str, content: str) -> ArticleScore:
     prompt = SCORING_PROMPT.format(title=title, content=content[:2000])
     client = get_client()
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
@@ -86,7 +87,7 @@ async def generate_tweet(
     )
     client = get_client()
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_MODEL,
         contents=prompt,
         config=types.GenerateContentConfig(
